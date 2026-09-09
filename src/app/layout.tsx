@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "ChatDigest - WhatsApp Group Chat Summarizer",
-  description: "AI-powered structured summaries for large WhatsApp group chats",
+  description:
+    "AI-powered structured summaries and grounded Q&A for WhatsApp group chats",
 };
 
 export default function RootLayout({
@@ -13,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <body className="antialiased min-h-screen bg-white text-slate-900">
         {children}
       </body>
     </html>
