@@ -17,6 +17,9 @@ const SummarizeRequestSchema = z.object({
   apiKey: z.string().optional(),
 });
 
+export const maxDuration = 60; // Max execution timeout for Vercel Serverless Functions (Hobby/Pro)
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

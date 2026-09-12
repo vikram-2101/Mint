@@ -4,6 +4,9 @@ import { parseWhatsAppChat } from "@/lib/parser/whatsapp-parser";
 import { answerChatQuestion } from "@/lib/llm/qa-service";
 import { ParsedMessage } from "@/types/chat";
 
+export const maxDuration = 60; // Max execution timeout for Vercel Serverless Functions (Hobby/Pro)
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

@@ -77,40 +77,38 @@ export async function summarizeChat(
   }
 
   // Hierarchical Multi-Chunk Processing (Map-Reduce)
-  // Step 1: Map - Process each chunk
-  const chunkSummaries: ChunkSummary[] = [];
-
-  for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i];
-    const chunkPrompt = buildChunkSummaryPrompt(
-      chunk.formattedText,
-      i,
-      chunks.length,
-    );
-
-    try {
-      const rawChunkResult = await generateFn(chunkPrompt);
-      const validatedChunk = parseAndValidateChunkSummary(rawChunkResult);
-      chunkSummaries.push(validatedChunk);
-    } catch (err) {
-      console.error(
-        `Warning: Failed to summarize chunk ${i + 1}/${chunks.length}:`,
-        err,
+  // Step 1: Map - Process all chunks concurrently for maximum performance
+  const chunkSummaries: ChunkSummary[] = await Promise.all(
+    chunks.map(async (chunk, i) => {
+      const chunkPrompt = buildChunkSummaryPrompt(
+        chunk.formattedText,
+        i,
+        chunks.length,
       );
-      // Fallback: minimal chunk summary to prevent pipeline failure
-      chunkSummaries.push({
-        chunkIndex: i,
-        mainTopics: [
-          `Discussion from ${chunk.startMessageId} to ${chunk.endMessageId}`,
-        ],
-        discussions: [],
-        decisions: [],
-        issues: [],
-        dates: [],
-        unresolved: [],
-      });
-    }
-  }
+
+      try {
+        const rawChunkResult = await generateFn(chunkPrompt);
+        return parseAndValidateChunkSummary(rawChunkResult);
+      } catch (err) {
+        console.error(
+          `Warning: Failed to summarize chunk ${i + 1}/${chunks.length}:`,
+          err,
+        );
+        // Fallback: minimal chunk summary to prevent pipeline failure
+        return {
+          chunkIndex: i,
+          mainTopics: [
+            `Discussion from ${chunk.startMessageId} to ${chunk.endMessageId}`,
+          ],
+          discussions: [],
+          decisions: [],
+          issues: [],
+          dates: [],
+          unresolved: [],
+        };
+      }
+    }),
+  );
 
   // Step 2: Reduce - Synthesize intermediate summaries into final summary
   const synthesisPrompt = buildFinalSynthesisPrompt(chunkSummaries, metadata);

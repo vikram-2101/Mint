@@ -19,7 +19,12 @@ export interface GeminiCallOptions {
   temperature?: number;
 }
 
-export const DEFAULT_GEMINI_MODELS = ["gemini-3.6-flash"];
+export const DEFAULT_GEMINI_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+  "gemini-1.5-pro",
+];
 
 /**
  * Calls Google Gemini API with JSON response format enforced.
