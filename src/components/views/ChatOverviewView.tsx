@@ -15,8 +15,6 @@ import {
   HardDrive,
   Sparkles,
   Loader2,
-  Lightbulb,
-  Shield,
   X,
 } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
@@ -26,10 +24,8 @@ export const ChatOverviewView: React.FC = () => {
     activeChat,
     setActiveChatId,
     setActiveView,
-    deleteChat,
     generateSummaryForChat,
     isSummarizing,
-    loadSampleChat,
   } = useChatContext();
 
   const [selectedPreset, setSelectedPreset] = useState<DateFilterPreset>(
@@ -41,6 +37,17 @@ export const ChatOverviewView: React.FC = () => {
   const [customEnd, setCustomEnd] = useState(activeChat?.customEndDate || "");
   const [showAllParticipantsModal, setShowAllParticipantsModal] =
     useState(false);
+
+  // Calculate filtered message count in real time
+  const filteredCount = useMemo(() => {
+    if (!activeChat) return 0;
+    const filtered = filterMessagesByDateRange(activeChat.messages, {
+      preset: selectedPreset,
+      startDate: customStart || undefined,
+      endDate: customEnd || undefined,
+    });
+    return filtered.length;
+  }, [activeChat, selectedPreset, customStart, customEnd]);
 
   if (!activeChat) {
     return (
@@ -55,16 +62,6 @@ export const ChatOverviewView: React.FC = () => {
       </div>
     );
   }
-
-  // Calculate filtered message count in real time
-  const filteredCount = useMemo(() => {
-    const filtered = filterMessagesByDateRange(activeChat.messages, {
-      preset: selectedPreset,
-      startDate: customStart || undefined,
-      endDate: customEnd || undefined,
-    });
-    return filtered.length;
-  }, [activeChat.messages, selectedPreset, customStart, customEnd]);
 
   const formatDateLabel = (isoDate: string | null) => {
     if (!isoDate) return "Unknown";
@@ -113,12 +110,12 @@ export const ChatOverviewView: React.FC = () => {
       {
         id: "all",
         label: "All Messages",
-        desc: "Summarize entire conversation",
+        desc: "Entire conversation",
       },
       { id: "last24h", label: "Last 24 Hours", desc: "Recent activity" },
-      { id: "last7d", label: "Last 7 Days", desc: "Past week activity" },
-      { id: "last30d", label: "Last 30 Days", desc: "Past month activity" },
-      { id: "custom", label: "Custom Range", desc: "Pick specific dates" },
+      { id: "last7d", label: "Last 7 Days", desc: "Past week" },
+      { id: "last30d", label: "Last 30 Days", desc: "Past month" },
+      { id: "custom", label: "Custom Range", desc: "Pick dates" },
     ];
 
   const handleGenerate = async () => {
@@ -131,131 +128,129 @@ export const ChatOverviewView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8 space-y-6 animate-in fade-in duration-300">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5 sm:space-y-6 animate-in fade-in duration-300">
       {/* 1. Top Action Navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <button
           onClick={() => {
             setActiveChatId(null);
             setActiveView("home");
           }}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Upload</span>
         </button>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              setActiveChatId(null);
-              setActiveView("home");
-            }}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 px-3.5 py-2 rounded-xl transition-colors shadow-2xs"
-          >
-            <RefreshCw className="h-3.5 w-3.5 text-slate-400" />
-            <span>Upload Different File</span>
-          </button>
-        </div>
+        <button
+          onClick={() => {
+            setActiveChatId(null);
+            setActiveView("home");
+          }}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-xl transition-colors shadow-2xs"
+        >
+          <RefreshCw className="h-3.5 w-3.5 text-slate-400" />
+          <span className="hidden sm:inline">Upload Different File</span>
+          <span className="sm:hidden">Change</span>
+        </button>
       </div>
 
       {/* 2. Header Chat Info Card */}
-      <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-6">
+      <div className="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-2xl bg-emerald-700 text-white flex items-center justify-center shadow-md shadow-emerald-700/20 shrink-0">
-              <FileText className="h-7 w-7" />
+          <div className="flex items-center gap-3.5">
+            <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-emerald-700 text-white flex items-center justify-center shadow-md shadow-emerald-700/20 shrink-0">
+              <FileText className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <div className="space-y-0.5 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight truncate max-w-xs sm:max-w-md">
                   {activeChat.name}
                 </h2>
-                <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                <span className="text-[10px] sm:text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
                   Parsed
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-medium">
-                {activeChat.fileName} &bull; Uploaded just now
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">
+                {activeChat.fileName} &bull; Uploaded recently
               </p>
             </div>
           </div>
 
           {/* Green Status Box */}
-          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/70 max-w-sm">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+          <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/70">
+            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 shrink-0" />
             <div>
               <div className="text-xs font-bold text-emerald-950">
-                Chat processed successfully
+                Chat parsed successfully
               </div>
-              <div className="text-[11px] text-emerald-700">
-                Your chat is ready to be summarized.
+              <div className="text-[10px] sm:text-[11px] text-emerald-700">
+                Ready to generate your AI summary.
               </div>
             </div>
           </div>
         </div>
 
         {/* 3. 4-Column Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 pt-1">
           {/* Messages */}
-          <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-100 flex items-center gap-3.5">
-            <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-600">
-              <MessageSquare className="h-5 w-5" />
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 border border-slate-100 flex items-center gap-3">
+            <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-100 text-emerald-600 shrink-0">
+              <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
-            <div>
-              <div className="text-[11px] font-medium text-slate-400">
-                Total Messages
+            <div className="min-w-0">
+              <div className="text-[10px] sm:text-[11px] font-medium text-slate-400 truncate">
+                Messages
               </div>
-              <div className="text-lg font-extrabold text-slate-900">
+              <div className="text-base sm:text-lg font-extrabold text-slate-900 truncate">
                 {activeChat.metadata.totalMessages.toLocaleString()}
               </div>
             </div>
           </div>
 
           {/* Participants */}
-          <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-100 flex items-center gap-3.5">
-            <div className="p-2.5 rounded-xl bg-blue-100 text-blue-600">
-              <Users className="h-5 w-5" />
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 border border-slate-100 flex items-center gap-3">
+            <div className="p-2 sm:p-2.5 rounded-xl bg-blue-100 text-blue-600 shrink-0">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
-            <div>
-              <div className="text-[11px] font-medium text-slate-400">
-                Participants
+            <div className="min-w-0">
+              <div className="text-[10px] sm:text-[11px] font-medium text-slate-400 truncate">
+                Members
               </div>
-              <div className="text-lg font-extrabold text-slate-900">
+              <div className="text-base sm:text-lg font-extrabold text-slate-900 truncate">
                 {activeChat.metadata.participantCount.toLocaleString()}
               </div>
             </div>
           </div>
 
           {/* Date Range */}
-          <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-100 flex items-center gap-3.5">
-            <div className="p-2.5 rounded-xl bg-amber-100 text-amber-600">
-              <Calendar className="h-5 w-5" />
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 border border-slate-100 flex items-center gap-3 col-span-2 sm:col-span-1">
+            <div className="p-2 sm:p-2.5 rounded-xl bg-amber-100 text-amber-600 shrink-0">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-medium text-slate-400">
-                Date Range
+              <div className="text-[10px] sm:text-[11px] font-medium text-slate-400">
+                Date Span
               </div>
               <div className="text-xs font-bold text-slate-900 truncate">
-                {formatDateLabel(activeChat.metadata.startDate)} &rarr;{" "}
-                {formatDateLabel(activeChat.metadata.endDate)}
+                {formatDateLabel(activeChat.metadata.startDate)}
               </div>
-              <div className="text-[10px] text-slate-400">
+              <div className="text-[9px] sm:text-[10px] text-slate-400 truncate">
                 {calculateDaysSpan()}
               </div>
             </div>
           </div>
 
           {/* File Size */}
-          <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-100 flex items-center gap-3.5">
-            <div className="p-2.5 rounded-xl bg-purple-100 text-purple-600">
-              <HardDrive className="h-5 w-5" />
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 border border-slate-100 flex items-center gap-3 col-span-2 sm:col-span-1">
+            <div className="p-2 sm:p-2.5 rounded-xl bg-purple-100 text-purple-600 shrink-0">
+              <HardDrive className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
-            <div>
-              <div className="text-[11px] font-medium text-slate-400">
+            <div className="min-w-0">
+              <div className="text-[10px] sm:text-[11px] font-medium text-slate-400 truncate">
                 File Size
               </div>
-              <div className="text-lg font-extrabold text-slate-900">
+              <div className="text-base sm:text-lg font-extrabold text-slate-900 truncate">
                 {formatFileSize(activeChat.fileSizeBytes)}
               </div>
             </div>
@@ -264,25 +259,28 @@ export const ChatOverviewView: React.FC = () => {
 
         {/* 4. Active Members Row */}
         <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="space-y-2">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               Active Members ({activeChat.metadata.participantCount})
             </div>
             <div className="flex items-center flex-wrap gap-1.5">
-              {activeChat.metadata.participants.slice(0, 8).map((p, idx) => (
+              {activeChat.metadata.participants.slice(0, 6).map((p, idx) => (
                 <div
                   key={idx}
-                  className="h-7 px-2.5 rounded-full bg-slate-100 text-slate-700 font-bold text-[11px] flex items-center justify-center border border-slate-200/60"
+                  className="h-6 sm:h-7 px-2 sm:px-2.5 rounded-full bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-[11px] flex items-center justify-center border border-slate-200/60"
                   title={p}
                 >
                   {getInitials(p)}
                 </div>
               ))}
 
-              {activeChat.metadata.participants.length > 8 && (
-                <div className="h-7 px-2 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[11px] flex items-center justify-center border border-emerald-200">
-                  +{activeChat.metadata.participants.length - 8}
-                </div>
+              {activeChat.metadata.participants.length > 6 && (
+                <button
+                  onClick={() => setShowAllParticipantsModal(true)}
+                  className="h-6 sm:h-7 px-2 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] sm:text-[11px] flex items-center justify-center border border-emerald-200"
+                >
+                  +{activeChat.metadata.participants.length - 6}
+                </button>
               )}
             </div>
           </div>
@@ -298,24 +296,23 @@ export const ChatOverviewView: React.FC = () => {
       </div>
 
       {/* 5. Select Time Range to Summarize Card */}
-      <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-6">
+      <div className="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-5">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-emerald-100 text-emerald-600">
-            <Calendar className="h-5 w-5" />
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-emerald-100 text-emerald-600 shrink-0">
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900">
               Select Time Range to Summarize
             </h3>
-            <p className="text-xs text-slate-500">
-              Choose the period you want to analyze. Messages are filtered
-              before entering the AI pipeline.
+            <p className="text-[11px] sm:text-xs text-slate-500">
+              Choose the period you want to analyze.
             </p>
           </div>
         </div>
 
         {/* Radio Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
           {PRESETS.map((preset) => {
             const isSelected = selectedPreset === preset.id;
             return (
@@ -324,25 +321,25 @@ export const ChatOverviewView: React.FC = () => {
                 type="button"
                 onClick={() => setSelectedPreset(preset.id)}
                 disabled={isSummarizing}
-                className={`flex flex-col items-start p-4 rounded-2xl border text-left transition-all ${
+                className={`flex flex-col items-start p-3 sm:p-3.5 rounded-2xl border text-left transition-all ${
                   isSelected
                     ? "border-emerald-500 bg-emerald-50/50 text-emerald-900 ring-2 ring-emerald-500/20 shadow-xs"
                     : "border-slate-200 hover:border-slate-300 bg-slate-50/40 text-slate-700"
                 }`}
               >
-                <div className="flex items-center gap-2 mb-1.5">
+                <div className="flex items-center gap-1.5 mb-1">
                   <div
-                    className={`h-4 w-4 rounded-full border flex items-center justify-center ${
+                    className={`h-3.5 w-3.5 rounded-full border flex items-center justify-center shrink-0 ${
                       isSelected
                         ? "border-emerald-600 bg-emerald-600 text-white"
                         : "border-slate-300 bg-white"
                     }`}
                   >
                     {isSelected && (
-                      <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                      <div className="h-1 w-1 rounded-full bg-white" />
                     )}
                   </div>
-                  <span className="text-xs font-bold leading-none">
+                  <span className="text-xs font-bold leading-tight truncate">
                     {preset.label}
                   </span>
                 </div>
@@ -356,8 +353,8 @@ export const ChatOverviewView: React.FC = () => {
 
         {/* Custom Range Picker */}
         {selectedPreset === "custom" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 animate-in fade-in">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 animate-in fade-in">
+            <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-600">
                 Start Date & Time
               </label>
@@ -369,7 +366,7 @@ export const ChatOverviewView: React.FC = () => {
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-600">
                 End Date & Time
               </label>
@@ -384,9 +381,9 @@ export const ChatOverviewView: React.FC = () => {
         )}
 
         {/* Action Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-slate-100">
           <div className="flex items-center gap-2 text-xs text-slate-600">
-            <MessageSquare className="h-4 w-4 text-emerald-600" />
+            <MessageSquare className="h-4 w-4 text-emerald-600 shrink-0" />
             <span>
               Selected:{" "}
               <strong className="text-slate-900">
@@ -399,7 +396,7 @@ export const ChatOverviewView: React.FC = () => {
           <button
             onClick={handleGenerate}
             disabled={isSummarizing || filteredCount === 0}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md shadow-emerald-800/20 hover:scale-[1.01] active:scale-[0.99] transition-all"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md shadow-emerald-800/20 hover:scale-[1.01] active:scale-[0.99] transition-all"
           >
             {isSummarizing ? (
               <>
@@ -416,43 +413,12 @@ export const ChatOverviewView: React.FC = () => {
         </div>
       </div>
 
-      {/* 6. Footer Info Cards */}
-      {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50/60 border border-amber-200/60">
-          <div className="p-2 rounded-xl bg-amber-100 text-amber-700">
-            <Lightbulb className="h-4 w-4" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-amber-950">Tip</div>
-            <div className="text-[11px] text-amber-800">
-              You can ask questions about this chat in the AI copilot sidebar
-              after generating the summary.
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/60">
-          <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700">
-            <Shield className="h-4 w-4" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-emerald-950">
-              Your data stays private
-            </div>
-            <div className="text-[11px] text-emerald-800">
-              We don&apos;t store or share your chats with anyone. Processing is
-              100% ephemeral.
-            </div>
-          </div>
-        </div>
-      </div> */}
-
       {/* View All Participants Modal */}
       {showAllParticipantsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full max-h-[80vh] flex flex-col shadow-2xl overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
                 <Users className="h-4 w-4 text-emerald-600" />
                 <span>
                   All Participants ({activeChat.metadata.participantCount})
@@ -466,7 +432,7 @@ export const ChatOverviewView: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-5 overflow-y-auto space-y-2 max-h-[60vh]">
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-2 max-h-[60vh]">
               {activeChat.metadata.participants.map((participant, idx) => (
                 <div
                   key={idx}
@@ -476,10 +442,10 @@ export const ChatOverviewView: React.FC = () => {
                     <div className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold flex items-center justify-center">
                       {getInitials(participant)}
                     </div>
-                    <span>{participant}</span>
+                    <span className="truncate max-w-[200px]">{participant}</span>
                   </div>
                   <span className="text-[10px] text-slate-400">
-                    Member #{idx + 1}
+                    #{idx + 1}
                   </span>
                 </div>
               ))}
@@ -488,7 +454,7 @@ export const ChatOverviewView: React.FC = () => {
             <div className="p-4 border-t border-slate-100 text-right">
               <button
                 onClick={() => setShowAllParticipantsModal(false)}
-                className="px-4 py-2 text-xs font-semibold bg-slate-900 text-white rounded-xl"
+                className="w-full sm:w-auto px-4 py-2 text-xs font-semibold bg-slate-900 text-white rounded-xl"
               >
                 Close
               </button>

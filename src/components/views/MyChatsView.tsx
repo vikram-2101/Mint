@@ -12,12 +12,19 @@ import {
   ArrowRight,
   Trash2,
   Plus,
+  Search,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 export const MyChatsView: React.FC = () => {
-  const { chats, setActiveChatId, setActiveView, deleteChat, searchQuery } =
-    useChatContext();
+  const {
+    chats,
+    setActiveChatId,
+    setActiveView,
+    deleteChat,
+    searchQuery,
+    setSearchQuery,
+  } = useChatContext();
 
   const filteredChats = chats.filter((chat) => {
     if (!searchQuery) return true;
@@ -39,7 +46,7 @@ export const MyChatsView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-6 animate-in fade-in duration-300">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
         <div>
@@ -47,7 +54,9 @@ export const MyChatsView: React.FC = () => {
             <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
               <Folder className="h-5 w-5" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">My Chats</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+              My Chats
+            </h1>
             <span className="text-xs font-bold bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full">
               {chats.length}
             </span>
@@ -62,16 +71,28 @@ export const MyChatsView: React.FC = () => {
             setActiveChatId(null);
             setActiveView("home");
           }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-sm transition-all self-start sm:self-auto"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-sm transition-all"
         >
           <Plus className="h-4 w-4" />
           <span>Upload New Chat</span>
         </button>
       </div>
 
+      {/* Mobile Search Bar (visible on < lg) */}
+      <div className="lg:hidden relative">
+        <Search className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Filter chats by name or member..."
+          className="w-full text-xs pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+        />
+      </div>
+
       {/* Chats Grid */}
       {filteredChats.length === 0 ? (
-        <div className="text-center py-16 space-y-4 bg-white border border-slate-200/80 rounded-3xl p-8">
+        <div className="text-center py-16 space-y-4 bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8">
           <div className="h-14 w-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
             <MessageSquare className="h-7 w-7" />
           </div>
@@ -87,19 +108,9 @@ export const MyChatsView: React.FC = () => {
                 : "Upload an exported WhatsApp .txt file or try our sample apartment conversation to get started."}
             </p>
           </div>
-          {/* <button
-            onClick={() => {
-              setActiveChatId(null);
-              setActiveView("home");
-            }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
-          >
-            <span>Upload Chat</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </button> */}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {filteredChats.map((chat) => {
             const isSummarized = chat.summary !== null;
 
@@ -111,15 +122,15 @@ export const MyChatsView: React.FC = () => {
                 {/* Top Info */}
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
                         <FileText className="h-5 w-5" />
                       </div>
-                      <div>
-                        <h3 className="font-bold text-sm text-slate-900 line-clamp-1">
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-sm text-slate-900 truncate">
                           {chat.name}
                         </h3>
-                        <p className="text-[11px] text-slate-400 truncate max-w-[170px]">
+                        <p className="text-[11px] text-slate-400 truncate">
                           {chat.fileName}
                         </p>
                       </div>
@@ -130,7 +141,7 @@ export const MyChatsView: React.FC = () => {
                         e.stopPropagation();
                         deleteChat(chat.id);
                       }}
-                      className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
                       title="Delete chat"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -153,22 +164,22 @@ export const MyChatsView: React.FC = () => {
 
                   {/* Key Stats */}
                   <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
-                    <div className="flex items-center gap-1.5 text-slate-500">
-                      <MessageSquare className="h-3.5 w-3.5 text-slate-400" />
-                      <span>
+                    <div className="flex items-center gap-1.5 text-slate-500 truncate">
+                      <MessageSquare className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      <span className="truncate">
                         {chat.metadata.totalMessages.toLocaleString()} msgs
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-slate-500">
-                      <Users className="h-3.5 w-3.5 text-slate-400" />
-                      <span>{chat.metadata.participantCount} members</span>
+                    <div className="flex items-center gap-1.5 text-slate-500 truncate">
+                      <Users className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      <span className="truncate">{chat.metadata.participantCount} members</span>
                     </div>
                   </div>
 
                   {chat.metadata.startDate && (
-                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400 truncate">
+                      <Calendar className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">
                         {formatDateLabel(chat.metadata.startDate)} &rarr;{" "}
                         {formatDateLabel(chat.metadata.endDate)}
                       </span>

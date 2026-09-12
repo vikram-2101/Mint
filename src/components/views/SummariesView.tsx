@@ -8,17 +8,17 @@ import {
   Check,
   Download,
   CheckCircle2,
-  HelpCircle,
   Calendar,
   AlertTriangle,
   MessageSquare,
-  ExternalLink,
   Layers,
   Users,
   PanelRightClose,
   PanelRightOpen,
   ArrowLeft,
   Sparkles,
+  HelpCircle,
+  X,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { AskTheChat } from "../AskTheChat";
@@ -37,8 +37,6 @@ export const SummariesView: React.FC = () => {
 
   const summarizedChats = chats.filter((c) => c.summary !== null);
 
-  // If no chat is currently selected, or active chat doesn't have a summary, but summarized chats exist:
-  // Show list of summarized chats to choose from.
   const displayChat =
     activeChat && activeChat.summary !== null
       ? activeChat
@@ -57,13 +55,13 @@ export const SummariesView: React.FC = () => {
 
   if (!displayChat || !displayChat.summary) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-6 animate-in fade-in duration-300">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6 animate-in fade-in duration-300">
         <div className="pb-4 border-b border-slate-200/80">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
               <FileText className="h-5 w-5" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
               Generated Summaries
             </h1>
           </div>
@@ -74,7 +72,7 @@ export const SummariesView: React.FC = () => {
         </div>
 
         {summarizedChats.length === 0 ? (
-          <div className="text-center py-16 space-y-4 bg-white border border-slate-200/80 rounded-3xl p-8">
+          <div className="text-center py-16 space-y-4 bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8">
             <div className="h-14 w-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
               <Sparkles className="h-7 w-7" />
             </div>
@@ -102,23 +100,23 @@ export const SummariesView: React.FC = () => {
                 onClick={() => setActiveChatId(chat.id)}
                 className="p-5 text-left rounded-3xl bg-white border border-slate-200/80 hover:border-emerald-400 shadow-2xs hover:shadow-xs transition-all space-y-3"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-9 w-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-9 w-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold text-xs shrink-0">
                       <FileText className="h-4 w-4" />
                     </div>
-                    <div>
-                      <h4 className="font-bold text-sm text-slate-900">
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-sm text-slate-900 truncate">
                         {chat.name}
                       </h4>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-slate-400 truncate">
                         {chat.metadata.totalMessages.toLocaleString()} messages
                         analyzed
                       </p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Open Summary &rarr;
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
+                    Open &rarr;
                   </span>
                 </div>
 
@@ -135,7 +133,7 @@ export const SummariesView: React.FC = () => {
     );
   }
 
-  const { summary, messagesMap, messages, name, id } = displayChat;
+  const { summary, messagesMap, messages, name } = displayChat;
 
   const generateMarkdown = () => {
     let md = `# Summary: ${summary.metadata.groupName || name}\n`;
@@ -144,43 +142,43 @@ export const SummariesView: React.FC = () => {
 
     md += `## Overview\n${summary.overview}\n\n`;
 
-    if (summary.keyDiscussions.length > 0) {
+    if (summary.keyDiscussions && summary.keyDiscussions.length > 0) {
       md += `## Key Discussions\n`;
       summary.keyDiscussions.forEach((d, i) => {
         md += `### ${i + 1}. ${d.topic}\n${d.summary}\n\n`;
       });
     }
 
-    if (summary.decisionsAndAnnouncements.length > 0) {
+    if (summary.decisionsAndAnnouncements && summary.decisionsAndAnnouncements.length > 0) {
       md += `## Decisions & Announcements\n`;
-      summary.decisionsAndAnnouncements.forEach((d) => {
-        md += `- **Decision**: ${d.text}\n`;
+      summary.decisionsAndAnnouncements.forEach((dec) => {
+        md += `- ${dec.text}\n`;
       });
-      md += "\n";
+      md += `\n`;
     }
 
-    if (summary.issuesAndQuestions.length > 0) {
+    if (summary.issuesAndQuestions && summary.issuesAndQuestions.length > 0) {
       md += `## Issues & Questions\n`;
-      summary.issuesAndQuestions.forEach((issue) => {
-        md += `- **[${issue.status.toUpperCase()}] ${issue.topic}**: ${issue.details}\n`;
+      summary.issuesAndQuestions.forEach((iss) => {
+        md += `- **${iss.topic}** (${iss.status}): ${iss.details}\n`;
       });
-      md += "\n";
+      md += `\n`;
     }
 
-    if (summary.unresolvedTopics.length > 0) {
-      md += `## Unresolved Topics\n`;
-      summary.unresolvedTopics.forEach((u) => {
-        md += `- ${u}\n`;
-      });
-      md += "\n";
-    }
-
-    if (summary.importantDatesAndActions.length > 0) {
+    if (summary.importantDatesAndActions && summary.importantDatesAndActions.length > 0) {
       md += `## Important Dates & Actions\n`;
       summary.importantDatesAndActions.forEach((item) => {
         md += `- **${item.date}**: ${item.description}\n`;
       });
-      md += "\n";
+      md += `\n`;
+    }
+
+    if (summary.unresolvedTopics && summary.unresolvedTopics.length > 0) {
+      md += `## Unresolved Topics\n`;
+      summary.unresolvedTopics.forEach((u) => {
+        md += `- ${u}\n`;
+      });
+      md += `\n`;
     }
 
     return md;
@@ -211,43 +209,45 @@ export const SummariesView: React.FC = () => {
   return (
     <div className="h-full flex flex-col overflow-hidden animate-in fade-in duration-300">
       {/* Top Workspace Header Bar */}
-      <div className="h-14 bg-white border-b border-slate-200/80 px-6 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
+      <div className="min-h-14 bg-white border-b border-slate-200/80 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
           {summarizedChats.length > 1 && (
             <button
               onClick={() => setActiveChatId(null)}
-              className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 font-medium pr-2 border-r border-slate-200"
+              className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 font-medium pr-2 border-r border-slate-200 shrink-0"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              <span>All Summaries</span>
+              <span className="hidden sm:inline">All Summaries</span>
             </button>
           )}
-          <span className="text-xs font-bold text-slate-900 flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span>{name}</span>
+          <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5 truncate">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+            <span className="truncate max-w-[150px] sm:max-w-xs">{name}</span>
           </span>
-          <span className="text-[11px] text-slate-400 hidden sm:inline">
+          <span className="text-[11px] text-slate-400 hidden md:inline truncate">
             &bull; {formatDateString(summary.metadata.dateRange.start)} &rarr;{" "}
             {formatDateString(summary.metadata.dateRange.end)}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleCopyMarkdown}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200/80 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-200/80 transition-colors"
+            title="Copy as Markdown"
           >
             {copied ? (
               <Check className="h-3.5 w-3.5 text-emerald-600" />
             ) : (
               <Copy className="h-3.5 w-3.5" />
             )}
-            <span>{copied ? "Copied" : "Copy Markdown"}</span>
+            <span className="hidden sm:inline">{copied ? "Copied" : "Copy Markdown"}</span>
+            <span className="sm:hidden">{copied ? "Copied" : "Copy"}</span>
           </button>
 
           <button
             onClick={handleDownloadJson}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200/80 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-200/80 transition-colors"
             title="Export JSON"
           >
             <Download className="h-3.5 w-3.5" />
@@ -257,21 +257,21 @@ export const SummariesView: React.FC = () => {
           {/* Toggle AI Copilot Sidebar */}
           <button
             onClick={() => setShowCopilotSidebar(!showCopilotSidebar)}
-            className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors border ${
+            className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-xs ${
               showCopilotSidebar
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                : "bg-white text-slate-600 border-slate-200"
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/25 ring-2 ring-emerald-500/30"
+                : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 hover:border-emerald-400"
             }`}
-            title="Toggle AI Chat Copilot Panel"
+            title={showCopilotSidebar ? "Hide AI Copilot Sidebar" : "Open AI Copilot Sidebar"}
           >
             {showCopilotSidebar ? (
-              <PanelRightClose className="h-3.5 w-3.5" />
+              <PanelRightClose className="h-3.5 w-3.5 text-white" />
             ) : (
-              <PanelRightOpen className="h-3.5 w-3.5" />
+              <PanelRightOpen className="h-3.5 w-3.5 text-emerald-700" />
             )}
             <span>AI Copilot</span>
             <span
-              className={`h-2 w-2 rounded-full ${
+              className={`h-1.5 w-1.5 rounded-full ${
                 showCopilotSidebar ? "bg-white animate-pulse" : "bg-emerald-500"
               }`}
             />
@@ -280,19 +280,19 @@ export const SummariesView: React.FC = () => {
       </div>
 
       {/* Split Workspace Body */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Left Area: Main Summary Content (Scrollable) */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 max-w-4xl mx-auto">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-4xl mx-auto w-full">
           {/* Executive Overview */}
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-3">
+          <div className="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-3">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
               Executive Overview
             </span>
-            <p className="text-base text-slate-800 leading-relaxed font-normal">
+            <p className="text-sm sm:text-base text-slate-800 leading-relaxed font-normal">
               {summary.overview}
             </p>
 
-            <div className="flex items-center gap-4 pt-3 border-t border-slate-100 text-xs text-slate-400">
+            <div className="flex items-center gap-4 pt-3 border-t border-slate-100 text-xs text-slate-400 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <Layers className="h-3.5 w-3.5 text-emerald-600" />
                 <span>
@@ -313,14 +313,14 @@ export const SummariesView: React.FC = () => {
           </div>
 
           {/* Key Discussions */}
-          {summary.keyDiscussions.length > 0 && (
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-4">
+          {summary.keyDiscussions && summary.keyDiscussions.length > 0 && (
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-blue-100 text-blue-600">
                   <MessageSquare className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900">
                     Key Discussions
                   </h3>
                   <p className="text-[11px] text-slate-400">
@@ -330,33 +330,31 @@ export const SummariesView: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                {summary.keyDiscussions.map((d, idx) => (
+                {summary.keyDiscussions.map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2"
+                    className="p-4 rounded-2xl bg-slate-50/70 border border-slate-100 space-y-1.5"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <h4 className="font-bold text-slate-900 text-sm">
-                        {d.topic}
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-bold text-xs sm:text-sm text-slate-900">
+                        {item.topic}
                       </h4>
-
-                      {d.sourceMessageIds && d.sourceMessageIds.length > 0 && (
+                      {item.sourceMessageIds && item.sourceMessageIds.length > 0 && (
                         <button
                           onClick={() =>
                             setModalCitation({
-                              title: d.topic,
-                              sourceMessageIds: d.sourceMessageIds,
+                              title: item.topic,
+                              sourceMessageIds: item.sourceMessageIds,
                             })
                           }
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline shrink-0"
+                          className="text-[10px] text-emerald-700 font-semibold hover:underline shrink-0"
                         >
-                          <span>{d.sourceMessageIds.length} sources</span>
-                          <ExternalLink className="h-3 w-3" />
+                          Sources ({item.sourceMessageIds.length})
                         </button>
                       )}
                     </div>
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                      {d.summary}
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {item.summary}
                     </p>
                   </div>
                 ))}
@@ -365,50 +363,46 @@ export const SummariesView: React.FC = () => {
           )}
 
           {/* Decisions & Announcements */}
-          {summary.decisionsAndAnnouncements.length > 0 && (
-            <div className="bg-white border border-emerald-200/80 rounded-3xl p-6 shadow-sm space-y-4">
+          {summary.decisionsAndAnnouncements && summary.decisionsAndAnnouncements.length > 0 && (
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
                   <CheckCircle2 className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900">
                     Decisions & Announcements
                   </h3>
                   <p className="text-[11px] text-slate-400">
-                    Confirmed rules and official updates
+                    Resolved points and agreed consensus
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-2.5">
-                {summary.decisionsAndAnnouncements.map((decision, idx) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {summary.decisionsAndAnnouncements.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-start justify-between gap-3 p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100"
+                    className="p-4 rounded-2xl bg-emerald-50/40 border border-emerald-100 space-y-1.5"
                   >
-                    <div className="flex items-start gap-2.5">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                      <span className="text-xs sm:text-sm font-medium text-slate-800 leading-relaxed">
-                        {decision.text}
-                      </span>
-                    </div>
-
-                    {decision.sourceMessageIds &&
-                      decision.sourceMessageIds.length > 0 && (
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs sm:text-sm font-semibold text-emerald-950 leading-snug">
+                        {item.text}
+                      </p>
+                      {item.sourceMessageIds && item.sourceMessageIds.length > 0 && (
                         <button
                           onClick={() =>
                             setModalCitation({
-                              title: decision.text,
-                              sourceMessageIds: decision.sourceMessageIds,
+                              title: item.text,
+                              sourceMessageIds: item.sourceMessageIds,
                             })
                           }
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 hover:underline shrink-0"
+                          className="text-[10px] text-emerald-700 font-semibold hover:underline shrink-0"
                         >
-                          <span>View source</span>
-                          <ExternalLink className="h-3 w-3" />
+                          Sources
                         </button>
                       )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -416,92 +410,85 @@ export const SummariesView: React.FC = () => {
           )}
 
           {/* Issues & Questions */}
-          {summary.issuesAndQuestions.length > 0 && (
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-4">
+          {summary.issuesAndQuestions && summary.issuesAndQuestions.length > 0 && (
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
                   <HelpCircle className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    Issues & Questions
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                    Issues & Questions Raised
                   </h3>
                   <p className="text-[11px] text-slate-400">
-                    Concerns and their resolution status
+                    Questions, concerns, and their resolution status
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                {summary.issuesAndQuestions.map((issue, idx) => {
-                  const statusBadge =
-                    issue.status === "resolved"
-                      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
-                      : issue.status === "unresolved"
-                        ? "bg-red-100 text-red-800 border-red-200"
-                        : "bg-amber-100 text-amber-800 border-amber-200";
-
-                  return (
-                    <div
-                      key={idx}
-                      className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${statusBadge}`}
-                          >
-                            {issue.status.replace("_", " ")}
-                          </span>
-                          <h4 className="font-bold text-slate-900 text-xs sm:text-sm">
-                            {issue.topic}
-                          </h4>
-                        </div>
-
-                        {issue.sourceMessageIds &&
-                          issue.sourceMessageIds.length > 0 && (
-                            <button
-                              onClick={() =>
-                                setModalCitation({
-                                  title: issue.topic,
-                                  sourceMessageIds: issue.sourceMessageIds,
-                                })
-                              }
-                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 hover:underline shrink-0"
-                            >
-                              <span>
-                                Sources ({issue.sourceMessageIds.length})
-                              </span>
-                              <ExternalLink className="h-3 w-3" />
-                            </button>
-                          )}
+              <div className="space-y-2.5">
+                {summary.issuesAndQuestions.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-2xl bg-amber-50/40 border border-amber-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-slate-900">
+                          {item.topic}
+                        </span>
+                        <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800">
+                          {item.status}
+                        </span>
                       </div>
-                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                        {issue.details}
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        {item.details}
                       </p>
                     </div>
-                  );
-                })}
+
+                    {item.sourceMessageIds && item.sourceMessageIds.length > 0 && (
+                      <button
+                        onClick={() =>
+                          setModalCitation({
+                            title: item.topic,
+                            sourceMessageIds: item.sourceMessageIds,
+                          })
+                        }
+                        className="text-[10px] text-emerald-700 font-semibold hover:underline self-start sm:self-auto shrink-0"
+                      >
+                        Inspect Citation
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
           {/* Unresolved Topics */}
-          {summary.unresolvedTopics.length > 0 && (
-            <div className="bg-amber-50/60 border border-amber-200/80 rounded-3xl p-6 shadow-sm space-y-3">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <h3 className="text-sm font-bold text-amber-950">
-                  Unresolved Topics
-                </h3>
+          {summary.unresolvedTopics && summary.unresolvedTopics.length > 0 && (
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-red-100 text-red-600">
+                  <AlertTriangle className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                    Unresolved Topics
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Discussions requiring further clarification
+                  </p>
+                </div>
               </div>
-              <ul className="space-y-1.5">
+
+              <ul className="space-y-2">
                 {summary.unresolvedTopics.map((u, idx) => (
                   <li
                     key={idx}
-                    className="flex items-start gap-2 text-xs sm:text-sm text-amber-900"
+                    className="flex items-start gap-2 text-xs sm:text-sm text-slate-800"
                   >
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
                     <span>{u}</span>
                   </li>
                 ))}
@@ -509,15 +496,15 @@ export const SummariesView: React.FC = () => {
             </div>
           )}
 
-          {/* Important Dates */}
-          {summary.importantDatesAndActions.length > 0 && (
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-4">
+          {/* Important Dates & Actions */}
+          {summary.importantDatesAndActions && summary.importantDatesAndActions.length > 0 && (
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-purple-100 text-purple-600">
                   <Calendar className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900">
                     Important Dates & Upcoming Actions
                   </h3>
                   <p className="text-[11px] text-slate-400">
@@ -545,42 +532,52 @@ export const SummariesView: React.FC = () => {
           )}
         </div>
 
-        {/* Right Area: IDE-Style AI Chat Copilot Sidebar */}
+        {/* Right Area: AI Chat Copilot Drawer / Sidebar */}
         {showCopilotSidebar && (
-          <aside className="w-96 border-l border-slate-200/80 bg-white flex flex-col shrink-0 overflow-y-auto animate-in slide-in-from-right-4 duration-200">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                  <Sparkles className="h-4 w-4" />
+          <>
+            {/* Mobile/Tablet Backdrop (< lg) */}
+            <div
+              className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-xs animate-in fade-in"
+              onClick={() => setShowCopilotSidebar(false)}
+            />
+
+            {/* Sidebar Container (Desktop inline, Mobile/Tablet slide-over drawer) */}
+            <aside className="fixed inset-y-0 right-0 z-50 w-full sm:w-[420px] lg:relative lg:inset-auto lg:z-auto lg:w-96 xl:w-[420px] border-l border-slate-200/80 bg-white flex flex-col shrink-0 overflow-y-auto shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-200">
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white sticky top-0 z-10">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 block">
+                      AI Chat Copilot
+                    </span>
+                    <span className="text-[10px] text-slate-400 block truncate max-w-[190px]">
+                      Context: {name}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-bold text-xs text-slate-900 block">
-                    AI Chat Copilot
-                  </span>
-                  <span className="text-[10px] text-slate-400 block truncate max-w-[190px]">
-                    Context: {name}
-                  </span>
-                </div>
+
+                <button
+                  onClick={() => setShowCopilotSidebar(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  title="Close AI Copilot Panel"
+                  aria-label="Close Copilot"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
 
-              <button
-                onClick={() => setShowCopilotSidebar(false)}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                title="Hide Copilot Sidebar"
-              >
-                <PanelRightClose className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 p-4">
-              <AskTheChat
-                messages={messages}
-                messagesMap={messagesMap}
-                apiKey={apiKey}
-                groupName={name}
-              />
-            </div>
-          </aside>
+              <div className="flex-1 p-4">
+                <AskTheChat
+                  messages={messages}
+                  messagesMap={messagesMap}
+                  apiKey={apiKey}
+                  groupName={name}
+                />
+              </div>
+            </aside>
+          </>
         )}
       </div>
 
